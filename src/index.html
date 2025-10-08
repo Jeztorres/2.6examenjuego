@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title><%= htmlWebpackPlugin.options.title %></title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap");
+
+      body {
+        margin: 0;
+        font-family: "Rajdhani", sans-serif;
+        color: white;
+        background: #000;
+        overflow: hidden;
+      }
+
+      /* Crosshair */
+      #crosshair {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 2%;
+        transform: translate(-50%, -50%);
+        filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.8));
+      }
+
+      /* Ammo Counter */
+      #ammo_container {
+        position: absolute;
+        right: 5%;
+        bottom: 5%;
+        font-size: 3em;
+        font-family: "Orbitron", monospace;
+        font-weight: 700;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        background: rgba(0, 0, 0, 0.7);
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+      }
+
+      /* Loading Progress */
+      #progress {
+        position: absolute;
+        bottom: 9%;
+        left: 0;
+        width: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #00ff41, #00d4aa, #0099ff);
+        box-shadow: 0 0 20px rgba(0, 255, 65, 0.8);
+        border-radius: 2px;
+      }
+
+      /* Health Bar */
+      #health_container {
+        position: absolute;
+        bottom: 8%;
+        left: 5%;
+        width: 20%;
+        height: 25px;
+        border: 3px solid #ffffff;
+        border-radius: 15px;
+        background: rgba(0, 0, 0, 0.8);
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+      }
+      #health_progress {
+        position: absolute;
+        background: linear-gradient(90deg, #ff4757, #ff3838);
+        width: 100%;
+        height: 100%;
+        border-radius: 12px;
+        box-shadow: 0 0 15px rgba(255, 71, 87, 0.6);
+        transition: all 0.3s ease;
+      }
+
+      /* Game HUD */
+      #game_hud {
+        visibility: hidden;
+      }
+
+      /* EPIC MENU STYLES */
+      #menu {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          ellipse at center,
+          #1a1a2e 0%,
+          #16213e 50%,
+          #0f0f23 100%
+        );
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        visibility: hidden;
+        overflow: hidden;
+      }
+
+      /* Animated Background */
+      #menu::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+            circle at 25% 25%,
+            rgba(255, 0, 150, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 75% 75%,
+            rgba(0, 255, 255, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 50% 50%,
+            rgba(255, 255, 0, 0.05) 0%,
+            transparent 70%
+          );
+        animation: rotateBackground 20s linear infinite;
+      }
+
+      @keyframes rotateBackground {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Particle Effect */
+      #menu::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: radial-gradient(
+            2px 2px at 20px 30px,
+            rgba(255, 255, 255, 0.3),
+            transparent
+          ),
+          radial-gradient(
+            2px 2px at 40px 70px,
+            rgba(255, 255, 255, 0.2),
+            transparent
+          ),
+          radial-gradient(
+            1px 1px at 90px 40px,
+            rgba(255, 255, 255, 0.4),
+            transparent
+          ),
+          radial-gradient(
+            1px 1px at 130px 80px,
+            rgba(255, 255, 255, 0.2),
+            transparent
+          ),
+          radial-gradient(
+            2px 2px at 160px 30px,
+            rgba(255, 255, 255, 0.3),
+            transparent
+          );
+        background-repeat: repeat;
+        background-size: 200px 100px;
+        animation: sparkle 3s linear infinite;
+      }
+
+      @keyframes sparkle {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 0.8;
+        }
+      }
+
+      .menu-content {
+        position: relative;
+        z-index: 10;
+        transform: perspective(1000px) rotateX(5deg);
+      }
+
+      /* Epic Title */
+      h1 {
+        font-family: "Orbitron", monospace;
+        font-size: 6em;
+        font-weight: 900;
+        margin-bottom: 0.3em;
+        background: linear-gradient(45deg, #ff0080, #ff8c00, #40e0d0, #ff0080);
+        background-size: 400% 400%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: epicGradient 4s ease-in-out infinite;
+        text-shadow: 0 0 30px rgba(255, 0, 128, 0.5);
+        letter-spacing: 3px;
+        position: relative;
+      }
+
+      h1::before {
+        content: "ZONA DE COMBATE";
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: linear-gradient(
+          45deg,
+          transparent,
+          rgba(255, 255, 255, 0.1),
+          transparent
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: shine 2s ease-in-out infinite;
+      }
+
+      @keyframes epicGradient {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
+      @keyframes shine {
+        0% {
+          background-position: -200% 0;
+        }
+        100% {
+          background-position: 200% 0;
+        }
+      }
+
+      /* Epic Subtitle */
+      .subtitle {
+        font-size: 1.8em;
+        font-weight: 300;
+        color: #00ffff;
+        margin-bottom: 3em;
+        text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        letter-spacing: 2px;
+        animation: glow 2s ease-in-out infinite alternate;
+      }
+
+      @keyframes glow {
+        0% {
+          text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+        100% {
+          text-shadow: 0 0 30px rgba(0, 255, 255, 0.8),
+            0 0 40px rgba(0, 255, 255, 0.3);
+        }
+      }
+
+      /* Epic Buttons */
+      .menu-button {
+        background: linear-gradient(
+          45deg,
+          rgba(0, 0, 0, 0.8),
+          rgba(30, 30, 30, 0.9)
+        );
+        color: #ffffff;
+        font-size: 1.4em;
+        font-weight: 600;
+        font-family: "Rajdhani", sans-serif;
+        border: 2px solid transparent;
+        border-radius: 15px;
+        cursor: pointer;
+        margin: 12px 0;
+        padding: 18px 40px;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        position: relative;
+        overflow: hidden;
+        min-width: 320px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      .menu-button::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.4),
+          transparent
+        );
+        transition: left 0.6s ease;
+      }
+
+      .menu-button::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, #ff0080, #ff8c00, #40e0d0, #ff0080);
+        background-size: 400% 400%;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: -1;
+        animation: epicGradient 3s ease-in-out infinite;
+      }
+
+      .menu-button:hover::before {
+        left: 100%;
+      }
+
+      .menu-button:hover::after {
+        opacity: 1;
+      }
+
+      .menu-button:hover {
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 15px 40px rgba(255, 0, 128, 0.4);
+        border-color: #ff0080;
+        color: #ffffff;
+      }
+
+      .menu-button:active {
+        transform: translateY(-2px) scale(1.02);
+      }
+
+      /* Mode Descriptions */
+      .mode-description {
+        font-size: 0.9em;
+        color: #888;
+        margin-top: 5px;
+        font-weight: 300;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .menu-button:hover .mode-description {
+        opacity: 1;
+      }
+
+      #debug {
+        position: absolute;
+        right: 5%;
+        top: 5%;
+      }
+
+      /* Safe Zone Indicator */
+      #safe_zone_indicator {
+        position: absolute;
+        top: 15%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(
+          45deg,
+          rgba(0, 255, 0, 0.9),
+          rgba(0, 200, 0, 0.9)
+        );
+        color: white;
+        padding: 15px 30px;
+        border-radius: 25px;
+        font-size: 1.4em;
+        font-weight: bold;
+        font-family: "Orbitron", monospace;
+        display: none;
+        animation: safeZonePulse 1.5s infinite;
+        border: 3px solid rgba(0, 255, 0, 0.5);
+        box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+      }
+
+      @keyframes safeZonePulse {
+        0%,
+        100% {
+          opacity: 0.8;
+          transform: translateX(-50%) scale(1);
+          box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
+        }
+        50% {
+          opacity: 1;
+          transform: translateX(-50%) scale(1.05);
+          box-shadow: 0 0 50px rgba(0, 255, 0, 0.8);
+        }
+      }
+
+      /* Wave System UI */
+      #wave_system {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        display: none;
+        z-index: 1000;
+      }
+
+      #wave_announcement {
+        font-family: "Orbitron", monospace;
+        font-size: 4em;
+        font-weight: 900;
+        color: #ff0080;
+        text-shadow: 0 0 30px rgba(255, 0, 128, 0.8);
+        margin-bottom: 20px;
+        animation: waveAnnounce 0.5s ease-out;
+      }
+
+      @keyframes waveAnnounce {
+        0% {
+          opacity: 0;
+          transform: scale(0.5) rotateY(90deg);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) rotateY(0deg);
+        }
+      }
+
+      #wave_timer {
+        font-family: "Orbitron", monospace;
+        font-size: 2.5em;
+        font-weight: 700;
+        color: #00ffff;
+        text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+        background: rgba(0, 0, 0, 0.8);
+        padding: 20px 40px;
+        border-radius: 20px;
+        border: 3px solid rgba(0, 255, 255, 0.5);
+        animation: timerPulse 1s infinite;
+      }
+
+      @keyframes timerPulse {
+        0%,
+        100% {
+          border-color: rgba(0, 255, 255, 0.5);
+          box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        50% {
+          border-color: rgba(0, 255, 255, 1);
+          box-shadow: 0 0 40px rgba(0, 255, 255, 0.6);
+        }
+      }
+
+      /* Current Wave Indicator */
+      #current_wave_indicator {
+        position: absolute;
+        top: 5%;
+        left: 5%;
+        background: linear-gradient(
+          45deg,
+          rgba(255, 0, 0, 0.9),
+          rgba(200, 0, 0, 0.9)
+        );
+        color: white;
+        padding: 15px 25px;
+        border-radius: 15px;
+        font-size: 1.3em;
+        font-weight: bold;
+        font-family: "Orbitron", monospace;
+        display: none;
+        border: 2px solid rgba(255, 0, 0, 0.5);
+        box-shadow: 0 0 25px rgba(255, 0, 0, 0.5);
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+      }
+
+      /* Loading Screen Enhancements */
+      #progress {
+        position: relative;
+      }
+
+      #progress::after {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: 0;
+        right: 0;
+        bottom: -2px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.6),
+          transparent
+        );
+        animation: progressShine 2s linear infinite;
+      }
+
+      @keyframes progressShine {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(100%);
+        }
+      }
+
+      /* Menu Button Hover Effects Enhancement */
+      .menu-button:hover {
+        animation: buttonHover 0.3s ease-in-out;
+      }
+
+      @keyframes buttonHover {
+        0% {
+          transform: translateY(0) scale(1);
+        }
+        50% {
+          transform: translateY(-8px) scale(1.08);
+        }
+        100% {
+          transform: translateY(-5px) scale(1.05);
+        }
+      }
+
+      /* Add screen edge glow effect */
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        background: radial-gradient(
+            circle at 0% 0%,
+            rgba(0, 255, 255, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 100% 0%,
+            rgba(255, 0, 128, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 0% 100%,
+            rgba(255, 255, 0, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 100% 100%,
+            rgba(128, 0, 255, 0.1) 0%,
+            transparent 50%
+          );
+        z-index: -1;
+      }
+
+      /* Zoom Controls Indicator */
+      #zoom_controls {
+        position: absolute;
+        bottom: 15%;
+        right: 5%;
+        background: rgba(0, 0, 0, 0.8);
+        color: #ffffff;
+        padding: 15px;
+        border-radius: 10px;
+        font-family: 'Orbitron', monospace;
+        font-size: 0.9em;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        display: none;
+        backdrop-filter: blur(5px);
+      }
+
+      #zoom_controls h4 {
+        margin: 0 0 10px 0;
+        color: #00ffff;
+        text-align: center;
+        font-size: 1.1em;
+      }
+
+      #zoom_controls .control-item {
+        margin: 5px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      #zoom_controls .key {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: bold;
+        color: #00ff41;
+      }
+
+      #zoom_level {
+        position: absolute;
+        top: 15%;
+        right: 5%;
+        background: rgba(0, 0, 0, 0.8);
+        color: #00ffff;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-family: 'Orbitron', monospace;
+        font-size: 1.1em;
+        font-weight: bold;
+        border: 2px solid rgba(0, 255, 255, 0.5);
+        display: none;
+        backdrop-filter: blur(5px);
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      }
+
+      /* Radar/Minimap for Survival Mode */
+      #survival_radar {
+        position: absolute;
+        top: 5%;
+        left: 5%;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(
+          circle,
+          rgba(0, 50, 0, 0.9) 0%,
+          rgba(0, 20, 0, 0.95) 100%
+        );
+        border: 3px solid rgba(0, 255, 0, 0.8);
+        border-radius: 50%;
+        display: none;
+        z-index: 1000;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+      }
+
+      #survival_radar::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 2px;
+        height: 75px;
+        background: rgba(0, 255, 0, 0.6);
+        transform: translate(-50%, -50%) rotate(0deg);
+        transform-origin: center bottom;
+        animation: radarSweep 3s linear infinite;
+      }
+
+      @keyframes radarSweep {
+        0% {
+          transform: translate(-50%, -50%) rotate(0deg);
+        }
+        100% {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
+      .radar-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 4px;
+        background: #00ff00;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+      }
+
+      .radar-safe-zone {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        background: #00ff41;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: radarPulse 1.5s ease-in-out infinite;
+        box-shadow: 0 0 10px rgba(0, 255, 65, 0.8);
+      }
+
+      @keyframes radarPulse {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.3);
+          opacity: 0.7;
+        }
+      }
+
+      .radar-grid {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background-image: radial-gradient(
+            circle,
+            transparent 24%,
+            rgba(0, 255, 0, 0.1) 25%,
+            rgba(0, 255, 0, 0.1) 26%,
+            transparent 27%
+          ),
+          radial-gradient(
+            circle,
+            transparent 49%,
+            rgba(0, 255, 0, 0.1) 50%,
+            rgba(0, 255, 0, 0.1) 51%,
+            transparent 52%
+          ),
+          radial-gradient(
+            circle,
+            transparent 74%,
+            rgba(0, 255, 0, 0.1) 75%,
+            rgba(0, 255, 0, 0.1) 76%,
+            transparent 77%
+          );
+      }
+
+      .radar-grid::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 1px;
+        height: 100%;
+        background: rgba(0, 255, 0, 0.2);
+        transform: translateX(-50%);
+      }
+
+      .radar-grid::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: rgba(0, 255, 0, 0.2);
+        transform: translateY(-50%);
+      }
+
+      /* Safe Zone Direction Indicator */
+      #safe_zone_direction {
+        position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        z-index: 1000;
+      }
+
+      .direction-arrow {
+        width: 0;
+        height: 0;
+        border-left: 15px solid transparent;
+        border-right: 15px solid transparent;
+        border-bottom: 30px solid #00ff41;
+        filter: drop-shadow(0 0 10px rgba(0, 255, 65, 0.8));
+        animation: directionPulse 1s ease-in-out infinite alternate;
+      }
+
+      @keyframes directionPulse {
+        0% {
+          transform: scale(1);
+          filter: drop-shadow(0 0 10px rgba(0, 255, 65, 0.8));
+        }
+        100% {
+          transform: scale(1.2);
+          filter: drop-shadow(0 0 20px rgba(0, 255, 65, 1));
+        }
+      }
+
+      .direction-text {
+        text-align: center;
+        margin-top: 10px;
+        font-family: "Orbitron", monospace;
+        font-size: 0.9em;
+        color: #00ff41;
+        text-shadow: 0 0 10px rgba(0, 255, 65, 0.8);
+        font-weight: bold;
+      }
+
+      .distance-text {
+        text-align: center;
+        margin-top: 5px;
+        font-family: "Orbitron", monospace;
+        font-size: 0.8em;
+        color: #ffffff;
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+      }
+
+      /* Exit Game Button */
+      #exit_game_button {
+        position: absolute;
+        top: 5%;
+        right: 5%;
+        background: linear-gradient(
+          45deg,
+          rgba(255, 0, 0, 0.8),
+          rgba(150, 0, 0, 0.9)
+        );
+        color: white;
+        border: 2px solid rgba(255, 0, 0, 0.6);
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-family: "Orbitron", monospace;
+        font-size: 1em;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: none;
+        z-index: 1000;
+      }
+
+      #exit_game_button:hover {
+        background: linear-gradient(
+          45deg,
+          rgba(255, 0, 0, 1),
+          rgba(200, 0, 0, 1)
+        );
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+      }
+
+      /* Death Screen */
+      #death_screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          circle at center,
+          rgba(139, 0, 0, 0.9) 0%,
+          rgba(0, 0, 0, 0.95) 100%
+        );
+        display: none;
+        z-index: 2000;
+        animation: bloodSplash 1s ease-out;
+      }
+
+      @keyframes bloodSplash {
+        0% {
+          background: radial-gradient(
+            circle at center,
+            rgba(255, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0) 100%
+          );
+          opacity: 0;
+        }
+        50% {
+          background: radial-gradient(
+            circle at center,
+            rgba(255, 0, 0, 0.8) 0%,
+            rgba(139, 0, 0, 0.6) 100%
+          );
+          opacity: 1;
+        }
+        100% {
+          background: radial-gradient(
+            circle at center,
+            rgba(139, 0, 0, 0.9) 0%,
+            rgba(0, 0, 0, 0.95) 100%
+          );
+          opacity: 1;
+        }
+      }
+
+      #death_screen::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: radial-gradient(
+            circle at 20% 20%,
+            rgba(255, 0, 0, 0.3) 0%,
+            transparent 30%
+          ),
+          radial-gradient(
+            circle at 80% 30%,
+            rgba(139, 0, 0, 0.4) 0%,
+            transparent 25%
+          ),
+          radial-gradient(
+            circle at 30% 80%,
+            rgba(255, 0, 0, 0.2) 0%,
+            transparent 35%
+          ),
+          radial-gradient(
+            circle at 70% 70%,
+            rgba(139, 0, 0, 0.3) 0%,
+            transparent 20%
+          );
+        animation: bloodDrip 2s ease-in-out infinite alternate;
+      }
+
+      @keyframes bloodDrip {
+        0% {
+          opacity: 0.6;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      .death-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: white;
+      }
+
+      .death-title {
+        font-family: "Orbitron", monospace;
+        font-size: 5em;
+        font-weight: 900;
+        color: #ff0000;
+        text-shadow: 0 0 30px rgba(255, 0, 0, 0.8),
+          0 0 60px rgba(255, 0, 0, 0.4);
+        margin-bottom: 0.5em;
+        animation: deathTitlePulse 2s ease-in-out infinite;
+      }
+
+      @keyframes deathTitlePulse {
+        0%,
+        100% {
+          transform: scale(1);
+          text-shadow: 0 0 30px rgba(255, 0, 0, 0.8),
+            0 0 60px rgba(255, 0, 0, 0.4);
+        }
+        50% {
+          transform: scale(1.05);
+          text-shadow: 0 0 40px rgba(255, 0, 0, 1),
+            0 0 80px rgba(255, 0, 0, 0.6);
+        }
+      }
+
+      .death-subtitle {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 1.8em;
+        color: #cccccc;
+        margin-bottom: 2em;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+      }
+
+      .death-button {
+        background: linear-gradient(
+          45deg,
+          rgba(139, 0, 0, 0.8),
+          rgba(255, 0, 0, 0.6)
+        );
+        color: white;
+        font-size: 1.3em;
+        font-weight: 600;
+        font-family: "Rajdhani", sans-serif;
+        border: 2px solid rgba(255, 0, 0, 0.8);
+        border-radius: 10px;
+        cursor: pointer;
+        margin: 10px 15px;
+        padding: 15px 30px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        backdrop-filter: blur(5px);
+      }
+
+      .death-button:hover {
+        background: linear-gradient(
+          45deg,
+          rgba(255, 0, 0, 0.9),
+          rgba(255, 100, 100, 0.7)
+        );
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 0, 0, 0.4);
+        border-color: #ff0000;
+      }
+
+      .death-button:active {
+        transform: translateY(0);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="debug"></div>
+    <div id="menu">
+      <div class="menu-content">
+        <h1>ZONA DE COMBATE</h1>
+        <p class="subtitle">SOBREVIVE A LA INVASIÓN MUTANTE</p>
+        <button class="menu-button" id="survival_mode">
+          MODO SUPERVIVENCIA
+          <div class="mode-description">
+            Busca zonas seguras para regenerar vida
+          </div>
+        </button>
+        <button class="menu-button" id="wave_mode">
+          MODO OLEADAS
+          <div class="mode-description">
+            Enfrenta oleadas infinitas de enemigos
+          </div>
+        </button>
+        <button class="menu-button" id="classic_mode">
+          MODO CLÁSICO
+          <div class="mode-description">Experiencia original del juego</div>
+        </button>
+      </div>
+    </div>
+    <div id="game_hud">
+      <img id="crosshair" src="<%=require('./ui/crosshair.png')%>" />
+      <div id="ammo_container">
+        <span id="current_ammo">0</span>
+        <span>|</span>
+        <span id="max_ammo">0</span>
+      </div>
+      <div id="health_container">
+        <div id="health_progress"></div>
+      </div>
+      <div id="safe_zone_indicator">🛡️ ZONA SEGURA - REGENERANDO VIDA</div>
+      <div id="current_wave_indicator">
+        OLEADA: <span id="wave_number">1</span>
+      </div>
+      <button id="exit_game_button">SALIR</button>
+
+      <!-- Survival Mode Radar -->
+      <div id="survival_radar">
+        <div class="radar-grid"></div>
+        <div class="radar-center"></div>
+        <div class="radar-safe-zone" id="radar_safe_zone"></div>
+      </div>
+
+      <!-- Safe Zone Direction Indicator -->
+      <div id="safe_zone_direction">
+        <div class="direction-arrow"></div>
+        <div class="direction-text">ZONA SEGURA</div>
+        <div class="distance-text" id="safe_zone_distance">0m</div>
+      </div>
+      
+      <!-- Zoom Level Indicator -->
+      <div id="zoom_level">ZOOM: <span id="zoom_value">1.0x</span></div>
+      
+      <!-- Zoom Controls Help -->
+      <div id="zoom_controls">
+        <h4>CONTROLES DE CÁMARA</h4>
+        <div class="control-item">
+          <span>Acercar:</span>
+          <span class="key">T</span>
+        </div>
+        <div class="control-item">
+          <span>Alejar:</span>
+          <span class="key">G</span>
+        </div>
+        <div class="control-item">
+          <span>Reset:</span>
+          <span class="key">R</span>
+        </div>
+        <div class="control-item">
+          <span>Navegar:</span>
+          <span class="key">Mouse</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wave System Announcements -->
+    <div id="wave_system">
+      <div id="wave_announcement"></div>
+      <div id="wave_timer"></div>
+    </div>
+
+    <!-- Death Screen -->
+    <div id="death_screen">
+      <div class="death-content">
+        <div class="death-title">MISIÓN FALLIDA</div>
+        <div class="death-subtitle">Has sido eliminado por los mutantes</div>
+        <button class="death-button" id="retry_button">
+          INTENTAR DE NUEVO
+        </button>
+        <button class="death-button" id="main_menu_button">
+          MENÚ PRINCIPAL
+        </button>
+      </div>
+    </div>
+    <div id="progress"></div>
+    <my-app></my-app>
+  </body>
+</html>
