@@ -29,7 +29,7 @@ const navmesh = './src/assets/navmesh.obj'
 
 const mutant = './src/assets/animations/mutant.fbx'
 const idleAnim = './src/assets/animations/mutant breathing idle.fbx'
-const attackAnim = './src/assets/animations/Mutant Punch.fbx'
+const attackAnim = './src/assets/animations/mutant punch.fbx'
 const walkAnim = './src/assets/animations/mutant walking.fbx'
 const runAnim = './src/assets/animations/mutant run.fbx'
 const dieAnim = './src/assets/animations/mutant dying.fbx'
