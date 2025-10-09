@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import Component from '../../Component.js'
-import {Ammo, AmmoHelper} from '../../AmmoLib.js'
+import {Ammo, AmmoHelper, CollisionFilterGroups} from '../../AmmoLib.js'
 
 export default class CharacterCollision extends Component{
     constructor(physicsWorld){
@@ -102,7 +102,12 @@ export default class CharacterCollision extends Component{
             collision.localTransform.setRotation(localRot);
             collision.localTransform.getOrigin().setValue(collision.position.x, collision.position.y, collision.position.z);
 
-            this.world.addCollisionObject(collision.object);
+            // Añadir con máscaras de colisión apropiadas para detección de disparos
+            this.world.addCollisionObject(
+                collision.object,
+                CollisionFilterGroups.SensorTrigger,
+                CollisionFilterGroups.AllFilter
+            );
         });
 
     }

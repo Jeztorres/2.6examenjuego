@@ -130,14 +130,13 @@ class FPSGameApp{
     this.physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
     this.physicsWorld.setGravity( new Ammo.btVector3( 0.0, -9.81, 0.0 ) );
     
-    // Ammo.addFunction no está disponible en la versión CDN de Ammo.js
-    // El PhysicsUpdate se llamará manualmente desde el loop principal
-    // const fp = Ammo.addFunction(this.PhysicsUpdate);
-    // this.physicsWorld.setInternalTickCallback(fp);
-    
-    // getOverlappingPairCache tampoco está disponible en la versión CDN
-    // Los ghost objects funcionarán de todas formas
-    // this.physicsWorld.getBroadphase().getOverlappingPairCache().setInternalGhostPairCallback(new Ammo.btGhostPairCallback());
+    // Configurar ghost pair callback para que los triggers funcionen correctamente
+    // Esto es CRUCIAL para que los monstruos puedan detectar al jugador en su hitbox
+    try {
+      this.physicsWorld.getBroadphase().getOverlappingPairCache().setInternalGhostPairCallback(new Ammo.btGhostPairCallback());
+    } catch (e) {
+      console.warn("No se pudo configurar btGhostPairCallback, los triggers podrían no funcionar correctamente");
+    }
 
     //Physics debug drawer
     //this.debugDrawer = new DebugDrawer(this.scene, this.physicsWorld);
@@ -182,17 +181,12 @@ class FPSGameApp{
   }
 
   SetupStartButton(){
-    console.log('Setting up start buttons...');
-    
     const survivalBtn = document.getElementById('survival_mode');
     const waveBtn = document.getElementById('wave_mode');
     const classicBtn = document.getElementById('classic_mode');
     
-    console.log('Buttons found:', { survivalBtn, waveBtn, classicBtn });
-    
     if (survivalBtn) {
       survivalBtn.addEventListener('click', () => {
-        console.log('Survival mode clicked');
         this.currentGameMode = GameModes.SURVIVAL;
         this.StartGame();
       });
@@ -200,7 +194,6 @@ class FPSGameApp{
     
     if (waveBtn) {
       waveBtn.addEventListener('click', () => {
-        console.log('Wave mode clicked');
         this.currentGameMode = GameModes.WAVES;
         this.StartGame();
       });
@@ -208,7 +201,6 @@ class FPSGameApp{
     
     if (classicBtn) {
       classicBtn.addEventListener('click', () => {
-        console.log('Classic mode clicked');
         this.currentGameMode = GameModes.CLASSIC;
         this.StartGame();
       });

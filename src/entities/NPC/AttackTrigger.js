@@ -18,10 +18,16 @@ export default class AttackTrigger extends Component{
     }
 
     SetupTrigger(){
-        const shape = new Ammo.btSphereShape(0.4);
+        const shape = new Ammo.btSphereShape(0.6); // Aumentado de 0.4 a 0.6 para mejor detección
         this.ghostObj = AmmoHelper.CreateTrigger(shape);
 
-        this.physicsWorld.addCollisionObject(this.ghostObj, CollisionFilterGroups.SensorTrigger);
+        // Añadir con grupo SensorTrigger y máscara para detectar todo (AllFilter)
+        // Esto permite que el trigger detecte al jugador
+        this.physicsWorld.addCollisionObject(
+            this.ghostObj, 
+            CollisionFilterGroups.SensorTrigger,
+            CollisionFilterGroups.AllFilter
+        );
     }
 
     Initialize(){
