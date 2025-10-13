@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Zona de Combate</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap");
+
+      body {
+        margin: 0;
+        font-family: "Rajdhani", sans-serif;
+        color: white;
+        background: #000;
+        overflow: hidden;
+      }
+
+      /* Crosshair */
+      #crosshair {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 2%;
+        transform: translate(-50%, -50%);
+        filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.8));
+      }
+
+      /* Ammo Counter */
+      #ammo_container {
+        position: absolute;
+        right: 5%;
+        bottom: 5%;
+        font-size: 3em;
+        font-family: "Orbitron", monospace;
+        font-weight: 700;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        background: rgba(0, 0, 0, 0.7);
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+      }
+
+      /* Loading Progress */
+      #progress {
+        position: absolute;
+        bottom: 9%;
+        left: 0;
+        width: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #00ff41, #00d4aa, #0099ff);
+        box-shadow: 0 0 20px rgba(0, 255, 65, 0.8);
+        border-radius: 2px;
+      }
+
+      /* Health Bar */
+      #health_container {
+        position: absolute;
+        bottom: 8%;
+        left: 5%;
+        width: 20%;
+        height: 25px;
+        border: 3px solid #ffffff;
+        border-radius: 15px;
+        background: rgba(0, 0, 0, 0.8);
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+      }
+      #health_progress {
+        position: absolute;
+        background: linear-gradient(90deg, #ff4757, #ff3838);
+        width: 100%;
+        height: 100%;
+        border-radius: 12px;
+        box-shadow: 0 0 15px rgba(255, 71, 87, 0.6);
+        transition: all 0.3s ease;
+      }
+
+      /* Mutant Counter */
+      #mutant_counter {
+        position: absolute;
+        top: 15%;
+        right: 5%;
+        display: flex;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 10px 15px;
+        border-radius: 10px;
+        border: 2px solid rgba(255, 107, 107, 0.6);
+        font-family: "Orbitron", monospace;
+        color: #ff6b6b;
+        font-size: 1.5em;
+        font-weight: bold;
+        text-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
+        box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+        backdrop-filter: blur(5px);
+        z-index: 1001;
+      }
+
+      #mutant_counter .mutant_icon {
+        margin-right: 10px;
+        font-size: 1.2em;
+        animation: mutantPulse 2s ease-in-out infinite;
+      }
+
+      @keyframes mutantPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+      }
+
+      #mutant_count {
+        font-size: 1.3em;
+        color: #ffffff;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+      }
+
+      /* Game HUD */
+      #game_hud {
+        visibility: hidden;
+      }
+
+      /* GEARS OF WAR START SCREEN */
+      #start_screen {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: url('./gears.jpg') center/cover no-repeat;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        z-index: 1000;
+      }
+
+      /* Dark overlay for start screen */
+      #start_screen::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          ellipse at center,
+          rgba(0, 0, 0, 0.3) 0%,
+          rgba(0, 0, 0, 0.7) 100%
+        );
+        z-index: 1;
+      }
+
+      /* Logo Container */
+      .start-logo {
+        position: relative;
+        z-index: 10;
+        text-align: center;
+        margin-bottom: 60px;
+        animation: logoEntrance 2s ease-out;
+      }
+
+      @keyframes logoEntrance {
+        0% {
+          opacity: 0;
+          transform: scale(0.8) translateY(-50px);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      /* Gears Logo */
+      .gears-logo {
+        font-family: "Orbitron", monospace;
+        font-size: 8em;
+        font-weight: 900;
+        color: #ffffff;
+        text-shadow: 
+          3px 3px 0px #333333,
+          6px 6px 12px rgba(0, 0, 0, 0.8),
+          0 0 30px rgba(255, 255, 255, 0.3);
+        letter-spacing: 6px;
+        line-height: 0.8;
+        margin-bottom: -10px;
+      }
+
+      .of-war-logo {
+        font-family: "Orbitron", monospace;
+        font-size: 3em;
+        font-weight: 700;
+        color: #ffffff;
+        text-shadow: 
+          2px 2px 0px #333333,
+          4px 4px 8px rgba(0, 0, 0, 0.8);
+        letter-spacing: 4px;
+        margin-bottom: -5px;
+      }
+
+      .gears-number {
+        font-family: "Orbitron", monospace;
+        font-size: 6em;
+        font-weight: 900;
+        color: #ff4757;
+        text-shadow: 
+          3px 3px 0px #8b0000,
+          6px 6px 12px rgba(0, 0, 0, 0.8),
+          0 0 30px rgba(255, 71, 87, 0.6);
+        letter-spacing: 2px;
+        position: absolute;
+        right: -80px;
+        top: 50px;
+        animation: numberGlow 3s ease-in-out infinite alternate;
+      }
+
+      @keyframes numberGlow {
+        0% {
+          text-shadow: 
+            3px 3px 0px #8b0000,
+            6px 6px 12px rgba(0, 0, 0, 0.8),
+            0 0 30px rgba(255, 71, 87, 0.6);
+        }
+        100% {
+          text-shadow: 
+            3px 3px 0px #8b0000,
+            6px 6px 12px rgba(0, 0, 0, 0.8),
+            0 0 50px rgba(255, 71, 87, 1);
+        }
+      }
+
+      /* Press Start Button */
+      .press-start {
+        position: relative;
+        z-index: 10;
+        background: rgba(0, 0, 0, 0.8);
+        border: 3px solid #ff4757;
+        border-radius: 10px;
+        padding: 20px 40px;
+        color: #ffffff;
+        font-family: "Orbitron", monospace;
+        font-size: 1.8em;
+        font-weight: 600;
+        letter-spacing: 2px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        animation: startPulse 2s ease-in-out infinite;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        backdrop-filter: blur(5px);
+      }
+
+      @keyframes startPulse {
+        0%, 100% {
+          box-shadow: 0 0 20px rgba(255, 71, 87, 0.5);
+          border-color: #ff4757;
+        }
+        50% {
+          box-shadow: 0 0 40px rgba(255, 71, 87, 0.8);
+          border-color: #ffffff;
+        }
+      }
+
+      .press-start:hover {
+        background: rgba(255, 71, 87, 0.2);
+        transform: scale(1.05);
+        box-shadow: 0 0 50px rgba(255, 71, 87, 1);
+      }
+
+      .play-icon {
+        font-size: 1.2em;
+        color: #ff4757;
+        animation: iconPulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes iconPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+      }
+
+      /* Copyright */
+      .copyright {
+        position: absolute;
+        bottom: 30px;
+        color: rgba(255, 255, 255, 0.6);
+        font-family: "Orbitron", monospace;
+        font-size: 0.9em;
+        z-index: 10;
+        animation: fadeIn 3s ease-in 1s both;
+      }
+
+      @keyframes fadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 0.6; }
+      }
+
+      /* Transition Effects */
+      .screen-transition {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          circle at center,
+          transparent 0%,
+          #ff4757 50%,
+          #000000 100%
+        );
+        z-index: 9999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 1s ease-in-out;
+      }
+
+      .screen-transition.active {
+        opacity: 1;
+      }
+
+      /* GEARS OF WAR MENU STYLES */
+      #menu {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: url('./gears.jpg') center/cover no-repeat;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding-left: 80px;
+        visibility: visible;
+        overflow: hidden;
+      }
+
+      /* Dark overlay for readability */
+      #menu::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          to right,
+          rgba(0, 0, 0, 0.8) 0%,
+          rgba(0, 0, 0, 0.4) 50%,
+          rgba(0, 0, 0, 0.1) 100%
+        );
+        z-index: 1;
+      }
+
+      /* Gears logo and menu container */
+
+      .menu-content {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        max-width: 500px;
+      }
+
+      /* Gears of War Title */
+      .gears-title {
+        font-family: "Orbitron", monospace;
+        font-size: 4.5em;
+        font-weight: 900;
+        color: #ff4757;
+        margin-bottom: 0.2em;
+        text-shadow: 
+          2px 2px 0px #8b0000,
+          4px 4px 8px rgba(0, 0, 0, 0.8);
+        letter-spacing: 4px;
+        line-height: 0.9;
+      }
+
+      .gears-subtitle {
+        font-family: "Orbitron", monospace;
+        font-size: 1.8em;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 2em;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        letter-spacing: 2px;
+      }
+
+      /* Main Menu Label */
+      .main-menu-label {
+        font-family: "Orbitron", monospace;
+        font-size: 1.4em;
+        font-weight: 600;
+        color: #ff4757;
+        margin-bottom: 1em;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        letter-spacing: 1px;
+      }
+
+      /* Gears of War Buttons */
+      .menu-button {
+        background: rgba(0, 0, 0, 0.7);
+        color: #ffffff;
+        font-size: 1.2em;
+        font-weight: 600;
+        font-family: "Orbitron", monospace;
+        border: 2px solid #333333;
+        border-left: 4px solid #ff4757;
+        cursor: pointer;
+        margin: 5px 0;
+        padding: 15px 25px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        position: relative;
+        width: 350px;
+        text-align: left;
+        backdrop-filter: blur(5px);
+        box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+      }
+
+      .menu-button:hover {
+        background: rgba(255, 71, 87, 0.2);
+        border-left: 4px solid #ffffff;
+        color: #ff4757;
+        transform: translateX(10px);
+        box-shadow: 4px 4px 12px rgba(255, 0, 0, 0.3);
+      }
+
+      .menu-button:active {
+        transform: translateX(5px);
+        background: rgba(255, 71, 87, 0.3);
+      }
+
+      /* Mode Descriptions */
+      .mode-description {
+        font-size: 0.85em;
+        color: #cccccc;
+        margin-top: 5px;
+        font-weight: 300;
+        text-transform: none;
+        letter-spacing: 0.5px;
+        opacity: 0.8;
+      }
+
+      .menu-button:hover .mode-description {
+        opacity: 1;
+      }
+
+      #debug {
+        position: absolute;
+        right: 5%;
+        top: 5%;
+      }
+
+      /* Safe Zone Indicator */
+      #safe_zone_indicator {
+        position: absolute;
+        top: 15%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(
+          45deg,
+          rgba(0, 255, 0, 0.9),
+          rgba(0, 200, 0, 0.9)
+        );
+        color: white;
+        padding: 15px 30px;
+        border-radius: 25px;
+        font-size: 1.4em;
+        font-weight: bold;
+        font-family: "Orbitron", monospace;
+        display: none;
+        animation: safeZonePulse 1.5s infinite;
+        border: 3px solid rgba(0, 255, 0, 0.5);
+        box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+      }
+
+      @keyframes safeZonePulse {
+        0%,
+        100% {
+          opacity: 0.8;
+          transform: translateX(-50%) scale(1);
+          box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
+        }
+        50% {
+          opacity: 1;
+          transform: translateX(-50%) scale(1.05);
+          box-shadow: 0 0 50px rgba(0, 255, 0, 0.8);
+        }
+      }
+
+      /* Wave System UI */
+      #wave_system {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        display: none;
+        z-index: 1000;
+      }
+
+      #wave_announcement {
+        font-family: "Orbitron", monospace;
+        font-size: 4em;
+        font-weight: 900;
+        color: #ff0080;
+        text-shadow: 0 0 30px rgba(255, 0, 128, 0.8);
+        margin-bottom: 20px;
+        animation: waveAnnounce 0.5s ease-out;
+      }
+
+      @keyframes waveAnnounce {
+        0% {
+          opacity: 0;
+          transform: scale(0.5) rotateY(90deg);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) rotateY(0deg);
+        }
+      }
+
+      #wave_timer {
+        font-family: "Orbitron", monospace;
+        font-size: 2.5em;
+        font-weight: 700;
+        color: #00ffff;
+        text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+        background: rgba(0, 0, 0, 0.8);
+        padding: 20px 40px;
+        border-radius: 20px;
+        border: 3px solid rgba(0, 255, 255, 0.5);
+        animation: timerPulse 1s infinite;
+      }
+
+      @keyframes timerPulse {
+        0%,
+        100% {
+          border-color: rgba(0, 255, 255, 0.5);
+          box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        50% {
+          border-color: rgba(0, 255, 255, 1);
+          box-shadow: 0 0 40px rgba(0, 255, 255, 0.6);
+        }
+      }
+
+      /* Current Wave Indicator */
+      #current_wave_indicator {
+        position: absolute;
+        top: 5%;
+        left: 5%;
+        background: linear-gradient(
+          45deg,
+          rgba(255, 0, 0, 0.9),
+          rgba(200, 0, 0, 0.9)
+        );
+        color: white;
+        padding: 15px 25px;
+        border-radius: 15px;
+        font-size: 1.3em;
+        font-weight: bold;
+        font-family: "Orbitron", monospace;
+        display: none;
+        border: 2px solid rgba(255, 0, 0, 0.5);
+        box-shadow: 0 0 25px rgba(255, 0, 0, 0.5);
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+      }
+
+      /* Loading Screen Enhancements */
+      #progress {
+        position: relative;
+      }
+
+      #progress::after {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: 0;
+        right: 0;
+        bottom: -2px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.6),
+          transparent
+        );
+        animation: progressShine 2s linear infinite;
+      }
+
+      @keyframes progressShine {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(100%);
+        }
+      }
+
+      /* Menu Button Hover Effects Enhancement */
+      .menu-button:hover {
+        animation: buttonHover 0.3s ease-in-out;
+      }
+
+      @keyframes buttonHover {
+        0% {
+          transform: translateY(0) scale(1);
+        }
+        50% {
+          transform: translateY(-8px) scale(1.08);
+        }
+        100% {
+          transform: translateY(-5px) scale(1.05);
+        }
+      }
+
+      /* Add screen edge glow effect */
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        background: radial-gradient(
+            circle at 0% 0%,
+            rgba(0, 255, 255, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 100% 0%,
+            rgba(255, 0, 128, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 0% 100%,
+            rgba(255, 255, 0, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 100% 100%,
+            rgba(128, 0, 255, 0.1) 0%,
+            transparent 50%
+          );
+        z-index: -1;
+      }
+
+      /* Zoom Controls Indicator */
+      #zoom_controls {
+        position: absolute;
+        bottom: 15%;
+        right: 5%;
+        background: rgba(0, 0, 0, 0.8);
+        color: #ffffff;
+        padding: 15px;
+        border-radius: 10px;
+        font-family: "Orbitron", monospace;
+        font-size: 0.9em;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        display: none;
+        backdrop-filter: blur(5px);
+      }
+
+      #zoom_controls h4 {
+        margin: 0 0 10px 0;
+        color: #00ffff;
+        text-align: center;
+        font-size: 1.1em;
+      }
+
+      #zoom_controls .control-item {
+        margin: 5px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      #zoom_controls .key {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: bold;
+        color: #00ff41;
+      }
+
+      #zoom_level {
+        position: absolute;
+        top: 15%;
+        right: 5%;
+        background: rgba(0, 0, 0, 0.8);
+        color: #00ffff;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-family: "Orbitron", monospace;
+        font-size: 1.1em;
+        font-weight: bold;
+        border: 2px solid rgba(0, 255, 255, 0.5);
+        display: none;
+        backdrop-filter: blur(5px);
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      }
+
+      /* Radar/Minimap for Survival Mode */
+      #survival_radar {
+        position: absolute;
+        top: 5%;
+        left: 5%;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(
+          circle,
+          rgba(0, 50, 0, 0.9) 0%,
+          rgba(0, 20, 0, 0.95) 100%
+        );
+        border: 3px solid rgba(0, 255, 0, 0.8);
+        border-radius: 50%;
+        display: none;
+        z-index: 1000;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+      }
+
+      #survival_radar::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 2px;
+        height: 75px;
+        background: rgba(0, 255, 0, 0.6);
+        transform: translate(-50%, -50%) rotate(0deg);
+        transform-origin: center bottom;
+        animation: radarSweep 3s linear infinite;
+      }
+
+      @keyframes radarSweep {
+        0% {
+          transform: translate(-50%, -50%) rotate(0deg);
+        }
+        100% {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
+      .radar-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 4px;
+        background: #00ff00;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+      }
+
+      .radar-safe-zone {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        background: #00ff41;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: radarPulse 1.5s ease-in-out infinite;
+        box-shadow: 0 0 10px rgba(0, 255, 65, 0.8);
+      }
+
+      @keyframes radarPulse {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.3);
+          opacity: 0.7;
+        }
+      }
+
+      .radar-grid {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background-image: radial-gradient(
+            circle,
+            transparent 24%,
+            rgba(0, 255, 0, 0.1) 25%,
+            rgba(0, 255, 0, 0.1) 26%,
+            transparent 27%
+          ),
+          radial-gradient(
+            circle,
+            transparent 49%,
+            rgba(0, 255, 0, 0.1) 50%,
+            rgba(0, 255, 0, 0.1) 51%,
+            transparent 52%
+          ),
+          radial-gradient(
+            circle,
+            transparent 74%,
+            rgba(0, 255, 0, 0.1) 75%,
+            rgba(0, 255, 0, 0.1) 76%,
+            transparent 77%
+          );
+      }
+
+      .radar-grid::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 1px;
+        height: 100%;
+        background: rgba(0, 255, 0, 0.2);
+        transform: translateX(-50%);
+      }
+
+      .radar-grid::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: rgba(0, 255, 0, 0.2);
+        transform: translateY(-50%);
+      }
+
+      /* Safe Zone Direction Indicator */
+      #safe_zone_direction {
+        position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        z-index: 1000;
+      }
+
+      .direction-arrow {
+        width: 0;
+        height: 0;
+        border-left: 15px solid transparent;
+        border-right: 15px solid transparent;
+        border-bottom: 30px solid #00ff41;
+        filter: drop-shadow(0 0 10px rgba(0, 255, 65, 0.8));
+        animation: directionPulse 1s ease-in-out infinite alternate;
+      }
+
+      @keyframes directionPulse {
+        0% {
+          transform: scale(1);
+          filter: drop-shadow(0 0 10px rgba(0, 255, 65, 0.8));
+        }
+        100% {
+          transform: scale(1.2);
+          filter: drop-shadow(0 0 20px rgba(0, 255, 65, 1));
+        }
+      }
+
+      .direction-text {
+        text-align: center;
+        margin-top: 10px;
+        font-family: "Orbitron", monospace;
+        font-size: 0.9em;
+        color: #00ff41;
+        text-shadow: 0 0 10px rgba(0, 255, 65, 0.8);
+        font-weight: bold;
+      }
+
+      .distance-text {
+        text-align: center;
+        margin-top: 5px;
+        font-family: "Orbitron", monospace;
+        font-size: 0.8em;
+        color: #ffffff;
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+      }
+
+      /* Exit Game Button */
+      #exit_game_button {
+        position: absolute;
+        top: 5%;
+        right: 5%;
+        background: linear-gradient(
+          45deg,
+          rgba(255, 0, 0, 0.8),
+          rgba(150, 0, 0, 0.9)
+        );
+        color: white;
+        border: 2px solid rgba(255, 0, 0, 0.6);
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-family: "Orbitron", monospace;
+        font-size: 1em;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: none;
+        z-index: 1000;
+      }
+
+      #exit_game_button:hover {
+        background: linear-gradient(
+          45deg,
+          rgba(255, 0, 0, 1),
+          rgba(200, 0, 0, 1)
+        );
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+      }
+
+      /* Death Screen */
+      #death_screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          circle at center,
+          rgba(139, 0, 0, 0.9) 0%,
+          rgba(0, 0, 0, 0.95) 100%
+        );
+        display: none;
+        z-index: 2000;
+        animation: bloodSplash 1s ease-out;
+      }
+
+      @keyframes bloodSplash {
+        0% {
+          background: radial-gradient(
+            circle at center,
+            rgba(255, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0) 100%
+          );
+          opacity: 0;
+        }
+        50% {
+          background: radial-gradient(
+            circle at center,
+            rgba(255, 0, 0, 0.8) 0%,
+            rgba(139, 0, 0, 0.6) 100%
+          );
+          opacity: 1;
+        }
+        100% {
+          background: radial-gradient(
+            circle at center,
+            rgba(139, 0, 0, 0.9) 0%,
+            rgba(0, 0, 0, 0.95) 100%
+          );
+          opacity: 1;
+        }
+      }
+
+      #death_screen::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: radial-gradient(
+            circle at 20% 20%,
+            rgba(255, 0, 0, 0.3) 0%,
+            transparent 30%
+          ),
+          radial-gradient(
+            circle at 80% 30%,
+            rgba(139, 0, 0, 0.4) 0%,
+            transparent 25%
+          ),
+          radial-gradient(
+            circle at 30% 80%,
+            rgba(255, 0, 0, 0.2) 0%,
+            transparent 35%
+          ),
+          radial-gradient(
+            circle at 70% 70%,
+            rgba(139, 0, 0, 0.3) 0%,
+            transparent 20%
+          );
+        animation: bloodDrip 2s ease-in-out infinite alternate;
+      }
+
+      @keyframes bloodDrip {
+        0% {
+          opacity: 0.6;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      .death-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: white;
+      }
+
+      .death-title {
+        font-family: "Orbitron", monospace;
+        font-size: 5em;
+        font-weight: 900;
+        color: #ff0000;
+        text-shadow: 0 0 30px rgba(255, 0, 0, 0.8),
+          0 0 60px rgba(255, 0, 0, 0.4);
+        margin-bottom: 0.5em;
+        animation: deathTitlePulse 2s ease-in-out infinite;
+      }
+
+      @keyframes deathTitlePulse {
+        0%,
+        100% {
+          transform: scale(1);
+          text-shadow: 0 0 30px rgba(255, 0, 0, 0.8),
+            0 0 60px rgba(255, 0, 0, 0.4);
+        }
+        50% {
+          transform: scale(1.05);
+          text-shadow: 0 0 40px rgba(255, 0, 0, 1),
+            0 0 80px rgba(255, 0, 0, 0.6);
+        }
+      }
+
+      .death-subtitle {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 1.8em;
+        color: #cccccc;
+        margin-bottom: 2em;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+      }
+
+      .death-button {
+        background: linear-gradient(
+          45deg,
+          rgba(139, 0, 0, 0.8),
+          rgba(255, 0, 0, 0.6)
+        );
+        color: white;
+        font-size: 1.3em;
+        font-weight: 600;
+        font-family: "Rajdhani", sans-serif;
+        border: 2px solid rgba(255, 0, 0, 0.8);
+        border-radius: 10px;
+        cursor: pointer;
+        margin: 10px 15px;
+        padding: 15px 30px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        backdrop-filter: blur(5px);
+      }
+
+      .death-button:hover {
+        background: linear-gradient(
+          45deg,
+          rgba(255, 0, 0, 0.9),
+          rgba(255, 100, 100, 0.7)
+        );
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 0, 0, 0.4);
+        border-color: #ff0000;
+      }
+
+      .death-button:active {
+        transform: translateY(0);
+      }
+
+      #loading_message {
+        position: absolute;
+        bottom: 12%;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #00ffff;
+        font-family: "Orbitron", monospace;
+        font-size: 1.2em;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      }
+
+      /* Game Mode Transition Effect - Gears of War Style */
+      #game_mode_transition {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: radial-gradient(circle at center, 
+          rgba(255, 71, 87, 0.9) 0%, 
+          rgba(139, 69, 19, 0.8) 30%, 
+          rgba(0, 0, 0, 0.95) 70%, 
+          #000 100%);
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+      }
+
+      .mode-transition-content {
+        text-align: center;
+        color: white;
+        font-family: "Orbitron", monospace;
+      }
+
+      .mode-name {
+        font-size: 4em;
+        font-weight: 900;
+        color: #ff4757;
+        text-shadow: 
+          0 0 20px rgba(255, 71, 87, 0.8),
+          0 0 40px rgba(255, 71, 87, 0.6),
+          0 0 60px rgba(255, 71, 87, 0.4),
+          2px 2px 4px rgba(0, 0, 0, 0.8);
+        animation: modeGlow 2s ease-in-out;
+        margin-bottom: 20px;
+        letter-spacing: 8px;
+      }
+
+      .mode-subtitle {
+        font-size: 1.5em;
+        color: rgba(255, 255, 255, 0.9);
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        animation: subtitleFade 2s ease-in-out;
+        margin-bottom: 30px;
+        font-weight: 300;
+      }
+
+      .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(255, 71, 87, 0.3);
+        border-top: 4px solid #ff4757;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+        box-shadow: 0 0 20px rgba(255, 71, 87, 0.6);
+      }
+
+      .gear-particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      @keyframes modeGlow {
+        0% { 
+          opacity: 0; 
+          transform: scale(0.8) translateY(-20px);
+          text-shadow: 0 0 5px rgba(255, 71, 87, 0.4);
+        }
+        50% { 
+          opacity: 1;
+          transform: scale(1.05) translateY(0);
+          text-shadow: 
+            0 0 30px rgba(255, 71, 87, 1),
+            0 0 60px rgba(255, 71, 87, 0.8),
+            0 0 90px rgba(255, 71, 87, 0.6);
+        }
+        100% { 
+          opacity: 1;
+          transform: scale(1) translateY(0);
+          text-shadow: 
+            0 0 20px rgba(255, 71, 87, 0.8),
+            0 0 40px rgba(255, 71, 87, 0.6),
+            0 0 60px rgba(255, 71, 87, 0.4);
+        }
+      }
+
+      @keyframes subtitleFade {
+        0% { 
+          opacity: 0; 
+          transform: translateY(20px);
+        }
+        50% { 
+          opacity: 0.3; 
+        }
+        100% { 
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      @keyframes gearRotate {
+        0% { transform: rotate(0deg) scale(0.5); opacity: 0.3; }
+        50% { opacity: 0.8; }
+        100% { transform: rotate(360deg) scale(0.8); opacity: 0.2; }
+      }
+
+      /* Efecto de explosión radial para transición de modo */
+      .radial-explosion {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: radial-gradient(circle, 
+          rgba(255, 71, 87, 0.8) 0%, 
+          rgba(255, 71, 87, 0.6) 30%, 
+          rgba(255, 71, 87, 0.3) 60%,
+          transparent 100%);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: explode 1s ease-out;
+        pointer-events: none;
+        z-index: 10000;
+      }
+
+      @keyframes explode {
+        0% {
+          width: 0;
+          height: 0;
+          opacity: 0;
+        }
+        30% {
+          width: 200px;
+          height: 200px;
+          opacity: 1;
+        }
+        100% {
+          width: 200vw;
+          height: 200vh;
+          opacity: 0;
+        }
+      }
+
+      /* Efecto de pulso en el loading spinner */
+      .loading-spinner {
+        position: relative;
+      }
+
+      .loading-spinner::after {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        right: -10px;
+        bottom: -10px;
+        border: 2px solid rgba(255, 71, 87, 0.2);
+        border-radius: 50%;
+        animation: spinnerPulse 2s ease-in-out infinite;
+      }
+
+      @keyframes spinnerPulse {
+        0%, 100% {
+          transform: scale(1);
+          opacity: 0.2;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 0.8;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="debug"></div>
+    
+    <!-- Pantalla de Inicio Gears of War -->
+    <div id="start_screen">
+      <div class="start-logo">
+        <div class="gears-logo">GEARS</div>
+        <div class="of-war-logo">OF WAR</div>
+        <div class="gears-number">3</div>
+      </div>
+      <div class="press-start" id="press_start_btn">
+        <span>PRESS START</span>
+        <div class="play-icon">▶</div>
+      </div>
+      <div class="copyright">Copyright 2025. Epic Games Inc.</div>
+    </div>
+
+    <!-- Menú Principal -->
+    <div id="menu" style="display: none;">
+      <div class="menu-content">
+        <div class="gears-title">GEARS</div>
+        <div class="gears-subtitle">OF WAR</div>
+        <div class="main-menu-label">MAIN MENU</div>
+        <button class="menu-button" id="survival_mode">
+          SUPERVIVENCIA
+          <div class="mode-description">Sálvate y mata para generar vida</div>
+        </button>
+        <button class="menu-button" id="wave_mode">
+          OLEADAS
+          <div class="mode-description">Enfrenta oleadas infinitas de enemigos</div>
+        </button>
+        <button class="menu-button" id="classic_mode">
+          CLÁSICO
+          <div class="mode-description">Experiencia original del juego</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Transición de Modo de Juego -->
+    <div id="game_mode_transition">
+      <div class="mode-transition-content">
+        <div class="mode-name" id="selected_mode_name">SUPERVIVENCIA</div>
+        <div class="mode-subtitle" id="selected_mode_subtitle">Iniciando modo de juego...</div>
+        <div class="loading-spinner"></div>
+      </div>
+      <div class="gear-particles" id="gear_particles"></div>
+    </div>
+    <div id="game_hud">
+      <img id="crosshair" src="./src/ui/crosshair.png" />
+      <div id="ammo_container">
+        <span id="current_ammo">0</span>
+        <span>|</span>
+        <span id="max_ammo">0</span>
+      </div>
+      <div id="health_container">
+        <div id="health_progress"></div>
+      </div>
+      
+      <!-- Contador de Mutantes -->
+      <div id="mutant_counter">
+        <div class="mutant_icon">👹</div>
+        <span id="mutant_count">0</span>
+      </div>
+      
+      <div id="safe_zone_indicator">🛡️ ZONA SEGURA - REGENERANDO VIDA</div>
+      <div id="current_wave_indicator">
+        OLEADA: <span id="wave_number">1</span>
+      </div>
+      <button id="exit_game_button">SALIR</button>
+
+      <!-- Survival Mode Radar -->
+      <div id="survival_radar">
+        <div class="radar-grid"></div>
+        <div class="radar-center"></div>
+        <div class="radar-safe-zone" id="radar_safe_zone"></div>
+      </div>
+
+      <!-- Safe Zone Direction Indicator -->
+      <div id="safe_zone_direction">
+        <div class="direction-arrow"></div>
+        <div class="direction-text">ZONA SEGURA</div>
+        <div class="distance-text" id="safe_zone_distance">0m</div>
+      </div>
+
+      <!-- Zoom Level Indicator -->
+      <div id="zoom_level">ZOOM: <span id="zoom_value">1.0x</span></div>
+
+      <!-- Zoom Controls Help -->
+      <div id="zoom_controls">
+        <h4>CONTROLES DE CÁMARA</h4>
+        <div class="control-item">
+          <span>Acercar:</span>
+          <span class="key">T</span>
+        </div>
+        <div class="control-item">
+          <span>Alejar:</span>
+          <span class="key">G</span>
+        </div>
+        <div class="control-item">
+          <span>Reset:</span>
+          <span class="key">R</span>
+        </div>
+        <div class="control-item">
+          <span>Navegar:</span>
+          <span class="key">Mouse</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wave System Announcements -->
+    <div id="wave_system">
+      <div id="wave_announcement"></div>
+      <div id="wave_timer"></div>
+    </div>
+
+    <!-- Death Screen -->
+    <div id="death_screen">
+      <div class="death-content">
+        <div class="death-title">MISIÓN FALLIDA</div>
+        <div class="death-subtitle">Has sido eliminado por los mutantes</div>
+        <button class="death-button" id="retry_button">
+          INTENTAR DE NUEVO
+        </button>
+        <button class="death-button" id="main_menu_button">
+          MENÚ PRINCIPAL
+        </button>
+      </div>
+    </div>
+    <div id="progress"></div>
+    <div id="loading_message">Cargando recursos...</div>
+    
+    <!-- Importmap para módulos ES -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.127.0/build/three.module.js",
+          "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.127.0/examples/jsm/",
+          "three-pathfinding": "https://unpkg.com/three-pathfinding@0.14.1/dist/three-pathfinding.module.js"
+        }
+      }
+    </script>
+    
+    <!-- Cargar Ammo.js primero (no es módulo) -->
+    <script src="https://cdn.jsdelivr.net/npm/ammo.js@0.0.10/ammo.js"></script>
+    
+    <!-- Script para pantalla de inicio -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const startScreen = document.getElementById('start_screen');
+        const menu = document.getElementById('menu');
+        const pressStartBtn = document.getElementById('press_start_btn');
+        
+        // Crear elemento de transición
+        const transition = document.createElement('div');
+        transition.className = 'screen-transition';
+        document.body.appendChild(transition);
+        
+        // Función para el efecto de transición
+        function startTransition() {
+          // Activar efecto de transición
+          transition.classList.add('active');
+          
+          // Reproducir sonido épico (si está disponible)
+          playStartSound();
+          
+          // Después de 1 segundo, cambiar pantallas
+          setTimeout(() => {
+            startScreen.style.display = 'none';
+            menu.style.display = 'flex';
+            
+            // Desactivar transición después de mostrar menú
+            setTimeout(() => {
+              transition.classList.remove('active');
+            }, 500);
+          }, 1000);
+        }
+        
+        // Función para sonido (opcional)
+        function playStartSound() {
+          try {
+            // Crear contexto de audio
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Crear sonido épico sintético
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Configurar sonido épico
+            oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.5);
+            oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 1);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 1);
+          } catch (e) {
+            console.log('Audio no disponible');
+          }
+        }
+        
+        // Event listeners
+        pressStartBtn.addEventListener('click', startTransition);
+        
+        // También permitir Enter o Espacio para iniciar
+        document.addEventListener('keydown', function(e) {
+          if (startScreen.style.display !== 'none' && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            startTransition();
+          }
+        });
+        
+        // Efecto de particulas en el fondo (opcional)
+        createBackgroundEffect();
+        
+        function createBackgroundEffect() {
+          const canvas = document.createElement('canvas');
+          canvas.style.position = 'absolute';
+          canvas.style.top = '0';
+          canvas.style.left = '0';
+          canvas.style.width = '100%';
+          canvas.style.height = '100%';
+          canvas.style.pointerEvents = 'none';
+          canvas.style.zIndex = '2';
+          startScreen.appendChild(canvas);
+          
+          const ctx = canvas.getContext('2d');
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+          
+          const particles = [];
+          
+          // Crear partículas
+          for (let i = 0; i < 50; i++) {
+            particles.push({
+              x: Math.random() * canvas.width,
+              y: Math.random() * canvas.height,
+              vx: (Math.random() - 0.5) * 0.5,
+              vy: (Math.random() - 0.5) * 0.5,
+              size: Math.random() * 2 + 1,
+              opacity: Math.random() * 0.5 + 0.2
+            });
+          }
+          
+          function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(particle => {
+              particle.x += particle.vx;
+              particle.y += particle.vy;
+              
+              // Wraparound
+              if (particle.x < 0) particle.x = canvas.width;
+              if (particle.x > canvas.width) particle.x = 0;
+              if (particle.y < 0) particle.y = canvas.height;
+              if (particle.y > canvas.height) particle.y = 0;
+              
+              // Dibujar partícula
+              ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+              ctx.beginPath();
+              ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+              ctx.fill();
+            });
+            
+            if (startScreen.style.display !== 'none') {
+              requestAnimationFrame(animate);
+            }
+          }
+          
+          animate();
+        }
+      });
+    </script>
+    
+    <!-- Cargar la aplicación como módulo -->
+    <script type="module" src="./src/entry.js"></script>
+  </body>
+</html>
