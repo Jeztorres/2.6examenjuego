@@ -314,12 +314,23 @@ class FPSGameApp{
 
   ShowMenu(visible=true){
     const menu = document.getElementById('menu');
-    menu.style.visibility = visible ? 'visible' : 'hidden';
+    if (menu) {
+      menu.style.display = visible ? 'block' : 'none';
+      menu.style.visibility = visible ? 'visible' : 'hidden';
+    }
     
     if (visible) {
-      // Cuando se muestra el menú, asegurar que el HUD esté oculto
+      // Cuando se muestra el menú, asegurar que otros elementos estén ocultos
       const gameHud = document.getElementById('game_hud');
-      gameHud.style.visibility = 'hidden';
+      if (gameHud) gameHud.style.visibility = 'hidden';
+      
+      // Ocultar pantalla de inicio si está visible
+      const startScreen = document.getElementById('start_screen');
+      if (startScreen) startScreen.style.display = 'none';
+      
+      // Ocultar pantalla de transición si está visible
+      const transitionScreen = document.getElementById('game_mode_transition');
+      if (transitionScreen) transitionScreen.style.display = 'none';
     }
   }
 
@@ -429,7 +440,8 @@ class FPSGameApp{
     playerEntity.AddComponent(new PlayerControls(this.camera, this.scene, this.renderer, this.assets['ak47']));
     playerEntity.AddComponent(new Weapon(this.camera, this.assets['ak47'].scene, this.assets['muzzleFlash'], this.physicsWorld, this.assets['ak47Shot'], this.listener ));
     playerEntity.AddComponent(new PlayerHealth(this.audioManager, this.deathManager));
-    playerEntity.SetPosition(new THREE.Vector3(2.14, 1.48, -1.36));
+    // Posición del jugador - Asegurar que esté sobre el suelo correctamente
+    playerEntity.SetPosition(new THREE.Vector3(2.14, 2.0, -1.36)); // Y aumentado para evitar problemas de física
     playerEntity.SetRotation(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), -Math.PI * 0.5));
     this.entityManager.Add(playerEntity);
 
@@ -621,38 +633,100 @@ class FPSGameApp{
   CleanupGameUI() {
     // Ocultar completamente el HUD del juego
     const gameHud = document.getElementById('game_hud');
-    gameHud.style.visibility = 'hidden';
+    if (gameHud) gameHud.style.visibility = 'hidden';
     
-    // Ocultar elementos específicos del HUD
-    document.getElementById('safe_zone_indicator').style.display = 'none';
-    document.getElementById('current_wave_indicator').style.display = 'none';
-    document.getElementById('wave_system').style.display = 'none';
-    document.getElementById('death_screen').style.display = 'none';
-    document.getElementById('exit_game_button').style.display = 'none';
-    document.getElementById('survival_radar').style.display = 'none';
-    document.getElementById('safe_zone_direction').style.display = 'none';
-    document.getElementById('zoom_level').style.display = 'none';
-    document.getElementById('zoom_controls').style.display = 'none';
+    // Lista de elementos del HUD para ocultar
+    const elementsToHide = [
+      'safe_zone_indicator',
+      'current_wave_indicator', 
+      'wave_system',
+      'death_screen',
+      'exit_game_button',
+      'survival_radar',
+      'safe_zone_direction',
+      'zoom_level',
+      'zoom_controls'
+    ];
+    
+    // Ocultar cada elemento del HUD
+    elementsToHide.forEach(elementId => {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.style.display = 'none';
+      }
+    });
+    
+    // ELIMINAR COMPLETAMENTE el panel de estadísticas de supervivencia
+    const survivalStats = document.getElementById('survival_stats');
+    if (survivalStats) {
+      console.log('🧹 Eliminando panel de supervivencia...');
+      survivalStats.remove();
+    }
+    
+    // Solo eliminar elementos específicos del HUD, NO del menú principal
+    const hudElementsToRemove = [
+      'survival_stats'
+    ];
+    
+    hudElementsToRemove.forEach(elementId => {
+      const element = document.getElementById(elementId);
+      if (element) {
+        console.log(`🧹 Eliminando elemento del HUD: ${elementId}`);
+        element.remove();
+      }
+    });
   }
 
   ShowMainMenu() {
-    // Cancelar animación actual
-    window.cancelAnimationFrame(this.animFrameId);
-    Input.ClearEventListners();
+    console.log('🏠 Entry: Mostrando menú principal...');
+    
+    try {
+      // Cancelar animación actual
+      if (this.animFrameId) {
+        window.cancelAnimationFrame(this.animFrameId);
+        this.animFrameId = null;
+      }
+      
+      // Limpiar listeners de input
+      if (Input && Input.ClearEventListners) {
+        Input.ClearEventListners();
+      }
 
-    // Limpiar escena
-    this.scene.clear();
-    
-    // Limpiar UI del juego
-    this.CleanupGameUI();
-    
-    // Resetear managers
-    this.deathManager.Reset();
-    this.gameModeManager.Reset();
-    
-    // Mostrar menú
-    this.ShowMenu(true);
-    this.isGamePaused = false;
+      // Limpiar escena 3D
+      if (this.scene) {
+        this.scene.clear();
+      }
+      
+      // Limpiar completamente la UI del juego ANTES de resetear managers
+      this.CleanupGameUI();
+      
+      // Resetear GameModeManager primero (para eliminar UI específica)
+      if (this.gameModeManager) {
+        this.gameModeManager.Reset();
+      }
+      
+      // Limpiar EntityManager (reset manual ya que no tiene método Clear)
+      if (this.entityManager) {
+        this.entityManager.entities = [];
+        this.entityManager.ids = 0;
+      }
+      
+      // Resetear DeathManager al final (para evitar acceder a elementos ya eliminados)
+      if (this.deathManager) {
+        this.deathManager.Reset();
+      }
+      
+      // Mostrar menú principal
+      this.ShowMenu(true);
+      this.isGamePaused = false;
+      
+      console.log('✅ Entry: Menú principal mostrado correctamente');
+      
+    } catch (error) {
+      console.error('❌ Error en ShowMainMenu:', error);
+      // Intentar mostrar el menú de todas formas
+      this.ShowMenu(true);
+    }
   }
 
   UpdateZoomUI() {

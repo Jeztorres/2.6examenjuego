@@ -182,9 +182,19 @@ export default class Weapon extends Component{
 
         console.log(`🔍 Buscando entre ${entityManager.entities.length} entidades...`);
         
+        let mutantsFound = 0;
         for (const entity of entityManager.entities) {
-            if (entity.name && entity.name.startsWith('Mutant')) {
+            // Debug: mostrar todos los nombres de entidades
+            if (entity.name) {
+                console.log(`🔍 Entidad encontrada: ${entity.name}`);
+            }
+            
+            // Buscar mutantes con diferentes patrones de nombre
+            if (entity.name && (entity.name.startsWith('Mutant') || entity.name.includes('mutant'))) {
+                mutantsFound++;
                 const mutantPos = entity.Position;
+                
+                console.log(`🧟 Mutante encontrado: ${entity.name} en posición:`, mutantPos);
                 
                 // Crear línea de disparo
                 const direction = end.clone().sub(start).normalize();
@@ -198,8 +208,8 @@ export default class Weapon extends Component{
                 
                 console.log(`📏 ${entity.name}: distancia=${distance.toFixed(2)}, distanciaALinea=${distanceToLine.toFixed(2)}`);
                 
-                // Si el mutante está cerca de la línea de disparo y dentro del rango
-                if (distanceToLine < 2.0 && distance < 100) {
+                // Hacer la detección menos estricta para facilitar los hits
+                if (distanceToLine < 3.0 && distance < 150) { // Aumenté la tolerancia
                     console.log("🎯 ¡MUTANTE DETECTADO POR MÉTODO ALTERNATIVO!");
                     entity.Broadcast({'topic': 'hit', from: this.parent, amount: this.damage});
                     return;
@@ -207,7 +217,7 @@ export default class Weapon extends Component{
             }
         }
         
-        console.log("❌ No se encontraron mutantes en la línea de disparo");
+        console.log(`❌ No se encontraron hits. Mutantes encontrados: ${mutantsFound}`);
     }
 
     CreateHitEffect(position) {

@@ -18,11 +18,23 @@ export default class PlayerHealth extends Component{
         console.log("PlayerHealth: Recibiendo evento hit:", e);
         if (this.isDead) return;
         
-        // Usar el daño especificado en el evento, o 10 por defecto
-        const damage = e.amount || 10;
+        // Usar el daño especificado en el evento, o 20 por defecto (incrementado para ser más notorio)
+        const damage = e.amount || 20;
         console.log(`PlayerHealth: Aplicando ${damage} de daño. Vida: ${this.health} -> ${this.health - damage}`);
         this.health = Math.max(0, this.health - damage);
-        this.uimanager.SetHealth(this.health);
+        
+        // Asegurar que el UI manager existe y actualizar la salud
+        if (this.uimanager) {
+            this.uimanager.SetHealth(this.health);
+        } else {
+            console.warn("PlayerHealth: UIManager no encontrado, buscando...");
+            // Buscar el UI manager
+            const ui = this.FindEntity('UIManager');
+            if (ui) {
+                this.uimanager = ui;
+                this.uimanager.SetHealth(this.health);
+            }
+        }
         
         // Verificar si el jugador ha muerto
         if (this.health <= 0 && !this.isDead) {

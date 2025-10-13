@@ -60,11 +60,15 @@ export default class DeathManager {
         this.deathScreenVisible = false;
         
         const deathScreen = document.getElementById('death_screen');
-        deathScreen.style.display = 'none';
+        if (deathScreen) {
+            deathScreen.style.display = 'none';
+        }
         
         // Mostrar HUD del juego
         const gameHud = document.getElementById('game_hud');
-        gameHud.style.visibility = 'visible';
+        if (gameHud) {
+            gameHud.style.visibility = 'visible';
+        }
     }
 
     RetryGame() {
@@ -88,27 +92,43 @@ export default class DeathManager {
     }
 
     ExitToMainMenu() {
+        console.log('🚪 DeathManager: Saliendo al menú principal...');
+        
         this.isPlayerDead = false;
         this.deathScreenVisible = false;
         
         // Ocultar pantalla de muerte si está visible
         const deathScreen = document.getElementById('death_screen');
-        deathScreen.style.display = 'none';
+        if (deathScreen) {
+            deathScreen.style.display = 'none';
+        }
+        
+        // Ocultar botón de salir
+        this.HideExitButton();
         
         // Volver al menú principal
         if (this.gameApp) {
+            console.log('🚪 DeathManager: Llamando a ShowMainMenu...');
             this.gameApp.ShowMainMenu();
+        } else {
+            console.error('❌ DeathManager: gameApp no está definido!');
         }
     }
 
     ShowExitButton() {
         const exitButton = document.getElementById('exit_game_button');
-        exitButton.style.display = 'block';
+        if (exitButton) {
+            exitButton.style.display = 'block';
+        } else {
+            console.warn('⚠️ DeathManager: Botón de salir no encontrado');
+        }
     }
 
     HideExitButton() {
         const exitButton = document.getElementById('exit_game_button');
-        exitButton.style.display = 'none';
+        if (exitButton) {
+            exitButton.style.display = 'none';
+        }
     }
 
     IsPlayerDead() {
@@ -121,17 +141,28 @@ export default class DeathManager {
         this.HideDeathScreen();
         this.HideExitButton();
         
-        // Asegurar que todos los elementos del HUD estén ocultos
+        // Asegurar que todos los elementos del HUD estén ocultos (con verificación de existencia)
         const gameHud = document.getElementById('game_hud');
-        gameHud.style.visibility = 'hidden';
+        if (gameHud) {
+            gameHud.style.visibility = 'hidden';
+        }
         
-        // Ocultar elementos específicos
-        document.getElementById('safe_zone_indicator').style.display = 'none';
-        document.getElementById('current_wave_indicator').style.display = 'none';
-        document.getElementById('wave_system').style.display = 'none';
-        document.getElementById('survival_radar').style.display = 'none';
-        document.getElementById('safe_zone_direction').style.display = 'none';
-        document.getElementById('zoom_level').style.display = 'none';
-        document.getElementById('zoom_controls').style.display = 'none';
+        // Lista de elementos a ocultar con verificación de existencia
+        const elementsToHide = [
+            'safe_zone_indicator',
+            'current_wave_indicator',
+            'wave_system',
+            'survival_radar',
+            'safe_zone_direction',
+            'zoom_level',
+            'zoom_controls'
+        ];
+        
+        elementsToHide.forEach(elementId => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.style.display = 'none';
+            }
+        });
     }
 }

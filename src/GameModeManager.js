@@ -70,6 +70,9 @@ export default class GameModeManager {
         this.survivalTime = 0;
         this.mutantsKilled = 0;
         this.difficultyLevel = 1;
+        
+        // Limpiar UI de supervivencia completamente
+        this.RemoveSurvivalUI();
     }
 
     GetRandomSpawnLocation() {
@@ -245,6 +248,12 @@ export default class GameModeManager {
 
     // Actualizar UI de supervivencia
     UpdateSurvivalUI() {
+        // Solo mostrar si estamos en modo supervivencia activo
+        if (this.currentMode !== 'SURVIVAL') {
+            this.RemoveSurvivalUI();
+            return;
+        }
+
         // Mostrar estadísticas de supervivencia
         const minutes = Math.floor(this.survivalTime / 60);
         const seconds = Math.floor(this.survivalTime % 60);
@@ -276,6 +285,14 @@ export default class GameModeManager {
             <div>💀 Eliminados: ${this.mutantsKilled}</div>
             <div>⚡ Dificultad: ${this.difficultyLevel}</div>
         `;
+    }
+
+    // Método para eliminar completamente la UI de supervivencia
+    RemoveSurvivalUI() {
+        const survivalStats = document.getElementById('survival_stats');
+        if (survivalStats) {
+            survivalStats.remove();
+        }
     }
 
     StartWave(entityManager) {
